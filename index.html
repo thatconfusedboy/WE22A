@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Load Shedding App</title>
+    <!-- Google Fonts and Font Awesome for icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* CSS variables for light mode */
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --text-color: #333;
+            --text-light: #fff;
+            --background-color: #f5f7fa;
+            --card-background: #ffffff;
+            --input-border: #ddd;
+            --button-hover: #2980b9;
+            --link-color: #3498db;
+            --box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            --header-bg-start: var(--secondary-color);
+            --header-bg-end: var(--primary-color);
+            --nav-bg: var(--secondary-color);
+        }
+
+        /* Dark mode overrides */
+        body.dark-mode {
+            --primary-color: #9b59b6;
+            --secondary-color: #34495e;
+            --accent-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --light-color: #3a3a5a;
+            --dark-color: #ecf0f1;
+            --text-color: #ecf0f1;
+            --text-light: #fff;
+            --background-color: #1a1a2e;
+            --card-background: #2a2a4a;
+            --input-border: #555;
+            --button-hover: #6a1b9a;
+            --link-color: #9b59b6;
+            --box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            --header-bg-start: var(--light-color);
+            --header-bg-end: var(--primary-color);
+            --nav-bg: var(--light-color);
+        }
+
+        /* Global reset and body styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            transition: background 0.3s ease, color 0.3s ease;
+            color: var(--text-color);
+        }
+
+        /* Welcome banner styles */
+        #welcome-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--header-bg-start), var(--header-bg-end));
+            color: var(--text-light);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-out, visibility 0.5s ease-out, background 0.3s ease;
+            text-align: center;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        #welcome-banner.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        body.dark-mode #welcome-banner {
+            background: linear-gradient(135deg, var(--header-bg-start), var(--header-bg-end));
+        }
+
+        .welcome-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .welcome-icon {
+            font-size: 5rem;
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.15);
+            padding: 30px;
+            border-radius: 50%;
+            animation: bounceIn 1s ease-out forwards;
+            transition: color 0.3s ease, background 0.3s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        #welcome-banner h2 {
+            margin: 0;
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.2;
+            letter-spacing: -1px;
+            animation: fadeIn 1.5s ease-out forwards;
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+
+        .welcome-subtext {
+            margin: 10px 0 0 0;
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+            animation: fadeIn 1.5s ease-out forwards;
+            animation-delay: 0.6s;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #continue-app-button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: var(--text-light);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 40px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-width: 220px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        #continue-app-button:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.3);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+        }
+        
+        #continue-app-button i {
+            font-size: 1.1rem;
+            transition: transform 0.3s ease;
+        }
+
+        #continue-app-button:hover i {
+            transform: translateX(5px);
+        }
+
+        body.dark-mode #continue-app-button {
+            background: linear-gradient(135deg, var(--primary-color), var(--header-bg-start));
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+        body.dark-mode #continue-app-button:hover {
+            background: linear-gradient(135deg, var(--primary-color), var(--nav-bg));
+            box-shadow: 0 12px 25px rgba(0,0,0,0.5);
+        }
+
+        /* Theme toggle button */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        .theme-toggle i {
+            color: var(--text-light);
+            font-size: 1.3rem;
+        }
+
+        body.dark-mode .theme-toggle {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        body.dark-mode .theme-toggle i {
+            color: #f1c40f;
+        }
+
+        /* Cookies popup styles */
+        #cookies-popup {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            width: 320px;
+            max-width: 90%;
+            background: var(--card-background);
+            border-radius: 10px;
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            z-index: 1000;
+            display: none;
+            border-left: 5px solid var(--primary-color);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease-out;
+        }
+        
+        body.dark-mode #cookies-popup {
+            background: var(--card-background);
+            color: var(--text-color);
+        }
+        
+        body.dark-mode #cookies-popup h3 {
+            color: var(--text-color);
+        }
+        
+        body.dark-mode #cookies-popup p {
+            color: var(--text-color);
+        }
+        
+        #cookies-popup.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        #cookies-popup h3 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            transition: color 0.3s ease;
+        }
+        
+        #cookies-popup p {
+            color: var(--text-color);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            transition: color 0.3s ease;
+        }
+        
+        .cookie-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        .cookie-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+        
+        #accept-cookies {
+            background: var(--success-color);
+            color: var(--text-light);
+        }
+        
+        #accept-cookies:hover {
+            background: #27ae60;
+            transform: translateY(-2px);
+        }
+        
+        #decline-cookies {
+            background: var(--light-color);
+            color: var(--text-color);
+            border: 1px solid var(--input-border);
+        }
+        
+        body.dark-mode #decline-cookies {
+            background: var(--card-background);
+            color: var(--text-color);
+            border: 1px solid var(--input-border);
+        }
+        
+        #decline-cookies:hover {
+            background: #e0e0e0;
+            transform: translateY(-2px);
+        }
+
+        body.dark-mode #decline-cookies:hover {
+            background: #3d3d3d;
+        }
+
+        .cookie-link {
+            color: var(--link-color);
+            text-decoration: underline;
+            font-weight: 500;
+        }
+
+        .cookie-link:hover {
+            text-decoration: none;
+        }
+
+        /* Login container styles */
+        .login-container {
+            background-color: var(--card-background);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: var(--box-shadow);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            margin-top: 20px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        body.dark-mode .login-container {
+            background-color: var(--card-background);
+            box-shadow: var(--box-shadow);
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            transition: background 0.3s ease;
+        }
+
+        .login-container h1 {
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+            font-size: 2rem;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .login-container h1 {
+            color: var(--text-color);
+        }
+
+        .login-container h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            width: 60px;
+            height: 4px;
+            border-radius: 2px;
+            transition: background 0.3s ease;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--secondary-color);
+            opacity: 0.7;
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .input-group i {
+            color: var(--text-color);
+        }
+
+        .login-container input {
+            width: 100%;
+            padding: 12px 12px 12px 40px;
+            margin: 8px 0;
+            border: 2px solid var(--input-border);
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: var(--light-color);
+            color: var(--text-color);
+        }
+
+        body.dark-mode .login-container input {
+            background-color: var(--light-color);
+            border-color: var(--input-border);
+            color: var(--text-color);
+        }
+
+        .login-container input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        body.dark-mode .login-container input:focus {
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.3);
+        }
+
+        .login-container button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: var(--text-light);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        body.dark-mode .login-container button {
+            background: linear-gradient(135deg, var(--header-bg-start), var(--nav-bg));
+        }
+
+        .login-container button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode .login-container button:hover {
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .login-container button:active {
+            transform: translateY(0);
+        }
+
+        /* Language switcher styles */
+        .language-switcher {
+            margin-top: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .language-switcher i {
+            color: var(--secondary-color);
+            transition: color 0.3s ease;
+        }
+
+        body.dark-mode .language-switcher i {
+            color: var(--text-color);
+        }
+
+        .language-switcher select {
+            padding: 8px 12px;
+            border-radius: 50px;
+            border: 2px solid var(--input-border);
+            background-color: var(--light-color);
+            font-family: 'Poppins', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-color);
+        }
+
+        body.dark-mode .language-switcher select {
+            background-color: var(--light-color);
+            border-color: var(--input-border);
+            color: var(--text-color);
+        }
+
+        .language-switcher select:hover {
+            border-color: var(--primary-color);
+        }
+
+        .language-switcher select:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 1.5rem;
+            }
+            
+            .login-container h1 {
+                font-size: 1.5rem;
+            }
+
+            #cookies-popup {
+                width: 90%;
+                right: 5%;
+                bottom: 10px;
+            }
+
+            #welcome-banner h2 {
+                font-size: 2rem;
+            }
+            
+            .welcome-subtext {
+                font-size: 1rem;
+            }
+            
+            .welcome-icon {
+                font-size: 3.5rem;
+                padding: 20px;
+            }
+
+            #continue-app-button {
+                width: auto;
+                padding: 12px 25px;
+                font-size: 1rem;
+                min-width: 180px;
+                margin-top: 30px;
+            }
+
+            .theme-toggle {
+                top: 15px;
+                right: 15px;
+                width: 36px;
+                height: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme toggle button (top right) -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <i class="fas fa-moon"></i>
+    </button>
+    
+    <!-- Welcome banner overlay (shown on first visit) -->
+    <div id="welcome-banner">
+        <div class="welcome-content">
+            <i class="fas fa-bolt welcome-icon"></i>
+            <div>
+                <h2>Welcome to the Load Shedding App</h2>
+                <p class="welcome-subtext">Your reliable power schedule companion</p>
+            </div>
+        </div>
+        <button id="continue-app-button" aria-label="Continue to login">
+            <span>Continue to Login</span> <i class="fas fa-arrow-right"></i>
+        </button>
+    </div>
+    
+    <!-- Cookies consent popup -->
+    <div id="cookies-popup" aria-live="polite" aria-atomic="true" role="dialog" aria-labelledby="cookies-title">
+        <h3 id="cookies-title">We Value Your Privacy</h3>
+        <p id="cookies-message">We use cookies to enhance your experience, provide personalized content, and analyze traffic. By continuing to use our app, you consent to our use of cookies. <a href="/cookie-policy" class="cookie-link" id="learn-more-link" target="_blank" rel="noopener noreferrer">Learn more</a></p>
+        <div class="cookie-buttons">
+            <button id="accept-cookies" class="cookie-btn">Accept</button>
+            <button id="decline-cookies" class="cookie-btn">Decline</button>
+        </div>
+    </div>
+
+    <!-- Login form container -->
+    <div class="login-container">
+        <h1 id="login-title">Login</h1>
+        
+        <!-- Username input group -->
+        <div class="input-group">
+            <i class="fas fa-user"></i>
+            <input type="text" id="username" placeholder="Username" aria-label="Username">
+        </div>
+        
+        <!-- Password input group -->
+        <div class="input-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" id="password" placeholder="Password" aria-label="Password">
+        </div>
+        
+        <!-- Login button -->
+        <button onclick="login()" id="login-button">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Login</span>
+        </button>
+        
+        <!-- Language switcher dropdown -->
+        <div class="language-switcher">
+            <i class="fas fa-globe"></i>
+            <select id="language-select" onchange="switchLanguage()">
+                <option value="en">English</option>
+                <option value="af">Afrikaans</option>
+                <option value="xh">isiXhosa</option>
+            </select>
+        </div>
+    </div>
+
+    <script>
+        // Translations for different languages
+        const languageContent = {
+            en: {
+                loginTitle: "Login",
+                usernamePlaceholder: "Username",
+                passwordPlaceholder: "Password",
+                loginButton: "Login",
+                welcomeMessage: "Welcome to the Load Shedding App",
+                welcomeSubtext: "Your reliable power schedule companion",
+                continueButton: "Continue to Login",
+                cookiesTitle: "We Value Your Privacy",
+                cookiesMessage: "We use cookies to enhance your experience, provide personalized content, and analyze traffic. By continuing to use our app, you consent to our use of cookies.",
+                acceptCookies: "Accept",
+                declineCookies: "Decline",
+                learnMore: "Learn more"
+            },
+            af: {
+                loginTitle: "Teken In",
+                usernamePlaceholder: "Gebruikersnaam",
+                passwordPlaceholder: "Wagwoord",
+                loginButton: "Teken In",
+                welcomeMessage: "Welkom by Load Shedding App",
+                welcomeSubtext: "Jou betroubare kragskedule metgesel",
+                continueButton: "Gaan voort na Meld Aan",
+                cookiesTitle: "Ons Waardeer Jou Privaatheid",
+                cookiesMessage: "Ons gebruik koekies om jou ervaring te verbeter, persoonlike inhoud te verskaf en verkeer te ontleed. Deur voort te gaan om ons app te gebruik, stem jy in tot ons gebruik van koekies.",
+                acceptCookies: "Aanvaar",
+                declineCookies: "Wys Af",
+                learnMore: "Leer meer"
+            },
+            xh: {
+                loginTitle: "Ngena",
+                usernamePlaceholder: "Igama lomsebenzisi",
+                passwordPlaceholder: "Igama lokugqitha",
+                loginButton: "Ngena",
+                welcomeMessage: "Wamkelekile kwi-App ye-Load Shedding",
+                welcomeSubtext: "Umhlobo wakho othembekileyo weeshedyuli zombane",
+                continueButton: "Qhubeka Ukuze Ungene",
+                cookiesTitle: "Sibaxhasi Ubumfihlo Bakho",
+                cookiesMessage: "Sisebenzisa iikuki ukuphucula amava akho, ukunika umxholo oqhelene nawe, nokuhlalutya umthamo wabantu. Ngokuqhubeka ukusebenzisa app yethu, uyavuma ukusebenzisa kwethu iikuki.",
+                acceptCookies: "Yamkela",
+                declineCookies: "Yala",
+                learnMore: "Funda okungakumbi"
+            }
+        };
+
+        // Toggles dark mode class on body
+        function toggleDarkMode() {
+            const body = document.body;
+            const isDarkMode = body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', isDarkMode); // Save preference
+            updateThemeIcon(isDarkMode); // Change icon
+        }
+
+        // Updates moon/sun icon
+        function updateThemeIcon(isDarkMode) {
+            const themeIcon = document.querySelector('#themeToggle i');
+            if (isDarkMode) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+            }
+        }
+
+        // Checks user's dark mode preference
+        function checkDarkModePreference() {
+            const darkMode = localStorage.getItem('darkMode') === 'true';
+            
+            // If no preference, check system settings
+            if (localStorage.getItem('darkMode') === null && window.matchMedia) {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.body.classList.toggle('dark-mode', prefersDark);
+                localStorage.setItem('darkMode', prefersDark);
+                updateThemeIcon(prefersDark);
+                return;
+            }
+            
+            document.body.classList.toggle('dark-mode', darkMode);
+            updateThemeIcon(darkMode);
+        }
+
+        // Sets a cookie
+        function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Lax";
+        }
+
+        // Gets a cookie by name
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) === ' ') c = c.substring(1);
+                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length);
+            }
+            return null;
+        }
+
+        // Shows the cookie popup
+        function showCookiePopup() {
+            const popup = document.getElementById('cookies-popup');
+            popup.style.display = 'block';
+            setTimeout(() => popup.classList.add('show'), 10);
+        }
+
+        // Hides the cookie popup
+        function hideCookiePopup() {
+            const popup = document.getElementById('cookies-popup');
+            popup.classList.remove('show');
+            setTimeout(() => popup.style.display = 'none', 300);
+        }
+
+        // Handles cookie acceptance/decline
+        function handleCookieConsent(accepted) {
+            setCookie('cookieConsent', accepted ? 'accepted' : 'declined', 365);
+            hideCookiePopup();
+            
+            if (accepted) {
+                // Here you would load analytics scripts if needed
+                console.log('Loading analytics scripts...');
+            } else {
+                // Analytics scripts are not loaded
+                console.log('Analytics disabled');
+            }
+        }
+
+        // Updates cookie popup text for chosen language
+        function updateCookieText(lang) {
+            const content = languageContent[lang];
+            document.getElementById('cookies-title').textContent = content.cookiesTitle;
+            document.getElementById('cookies-message').innerHTML = content.cookiesMessage + 
+                ` <a href="/cookie-policy?lang=${lang}" class="cookie-link" target="_blank" rel="noopener noreferrer">${content.learnMore}</a>`;
+            document.getElementById('accept-cookies').textContent = content.acceptCookies;
+            document.getElementById('decline-cookies').textContent = content.declineCookies;
+        }
+
+        // Switches all displayed language content
+        function switchLanguage() {
+            const lang = document.getElementById('language-select').value;
+            const content = languageContent[lang];
+            
+            // Update login form text
+            document.getElementById('login-title').textContent = content.loginTitle;
+            document.getElementById('username').placeholder = content.usernamePlaceholder;
+            document.getElementById('password').placeholder = content.passwordPlaceholder;
+            document.getElementById('login-button').innerHTML = `
+                <i class="fas fa-sign-in-alt"></i>
+                <span>${content.loginButton}</span>
+            `;
+            
+            // Update welcome banner text
+            document.querySelector('#welcome-banner h2').textContent = content.welcomeMessage;
+            document.querySelector('.welcome-subtext').textContent = content.welcomeSubtext;
+            document.getElementById('continue-app-button').innerHTML = `
+                <span>${content.continueButton}</span> <i class="fas fa-arrow-right"></i>
+            `;
+            
+            // Update cookie popup if not already accepted/declined
+            if (!getCookie('cookieConsent')) {
+                updateCookieText(lang);
+            }
+        }
+
+        // Handles dummy login
+        function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            
+            if (username && password) {
+                // Save user and language to localStorage
+                localStorage.setItem('currentUser', username);
+                localStorage.setItem('currentLanguage', document.getElementById('language-select').value);
+                
+                // Redirect to map page
+                window.location.href = 'map.html';
+            } else {
+                alert('Please enter both username and password');
+            }
+        }
+
+        // Shows welcome banner
+        function showWelcomeBanner() {
+            const welcomeBanner = document.getElementById('welcome-banner');
+            welcomeBanner.classList.add('show');
+            welcomeBanner.style.visibility = 'visible';
+            welcomeBanner.style.display = 'flex';
+        }
+
+        // Hides welcome banner
+        function hideWelcomeBanner() {
+            const welcomeBanner = document.getElementById('welcome-banner');
+            welcomeBanner.classList.remove('show');
+            setTimeout(() => {
+                welcomeBanner.style.display = 'none';
+                welcomeBanner.style.visibility = 'hidden';
+            }, 500);
+        }
+
+        // Runs when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            checkDarkModePreference(); // Set theme on load
+
+            // Set language from localStorage if available
+            const storedLanguage = localStorage.getItem('currentLanguage');
+            if (storedLanguage) {
+                document.getElementById('language-select').value = storedLanguage;
+                switchLanguage();
+            } else {
+                switchLanguage(); // Set default language
+            }
+
+            // Theme toggle button event
+            document.getElementById('themeToggle').addEventListener('click', toggleDarkMode);
+            // Cookie consent buttons events
+            document.getElementById('accept-cookies').addEventListener('click', () => handleCookieConsent(true));
+            document.getElementById('decline-cookies').addEventListener('click', () => handleCookieConsent(false));
+            // Welcome banner continue button event
+            document.getElementById('continue-app-button').addEventListener('click', hideWelcomeBanner);
+
+            // Welcome banner logic: show on first visit or if not seen before
+            const isFirstVisitThisSession = sessionStorage.getItem('firstVisitLogin') === null;
+            const hasSeenWelcome = localStorage.getItem('hasSeenWelcome');
+
+            if (!hasSeenWelcome || isFirstVisitThisSession) {
+                showWelcomeBanner();
+                localStorage.setItem('hasSeenWelcome', 'true');
+                sessionStorage.setItem('firstVisitLogin', 'false');
+            } else {
+                hideWelcomeBanner();
+            }
+
+            // Show cookie popup if consent not given yet
+            if (!getCookie('cookieConsent')) {
+                showCookiePopup();
+            }
+        });
+    </script>
+</body>
+</html>

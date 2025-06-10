@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Load Shedding Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* CSS variables for colors */
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --accent-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --text-color: #333;
+            --text-light: #fff;
+            --background-color: #f5f7fa;
+            --card-background: #ffffff;
+            --nav-bg: var(--secondary-color);
+            --header-bg-start: var(--secondary-color);
+            --header-bg-end: var(--primary-color);
+            --schedule-day-bg: var(--light-color);
+            --schedule-time-bg: rgba(255,255,255,0.7);
+            --chat-box-bg: var(--light-color);
+            --chat-input-border: #ddd;
+        }
+
+        /* Dark mode specific styles */
+        body.dark-mode {
+            --text-color: #ecf0f1;
+            --background-color: #1a1a2e;
+            --card-background: #2a2a4a;
+            --primary-color: #9b59b6;
+            --secondary-color: #34495e;
+            --accent-color: #e74c3c;
+            --light-color: #3a3a5a;
+            --dark-color: #ecf0f1;
+            --maze-wall-color: #4a4a6f; /* Maze specific, not used here directly */
+            --maze-path-color: #1a1a2e; /* Maze specific, not used here directly */
+            --maze-question-color: #2a2a4a; /* Maze specific, not used here directly */
+            --header-bg-start: var(--light-color);
+            --header-bg-end: var(--primary-color);
+            --nav-bg: var(--light-color);
+            --schedule-day-bg: var(--secondary-color);
+            --schedule-time-bg: rgba(0,0,0,0.4);
+            --chat-box-bg: var(--secondary-color);
+            --chat-input-border: var(--light-color);
+        }
+        
+        /* Universal box-sizing */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Body basic styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--background-color);
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Main content container */
+        .container {
+            width: 90%;
+            margin: 0 auto;
+            padding: 20px;
+            flex-grow: 1;
+        }
+
+        /* Header styling */
+        header {
+            background: linear-gradient(135deg, var(--header-bg-start), var(--header-bg-end));
+            color: var(--text-light);
+            padding: 1.5rem 0;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            transition: background 0.3s ease;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Navigation bar container */
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--nav-bg);
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s ease;
+        }
+
+        /* Grouping of navigation buttons */
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        /* Styling for nav buttons */
+        .nav-buttons button {
+            padding: 0.6rem 1.2rem;
+            background-color: var(--primary-color);
+            color: var(--text-light);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Nav button hover effect */
+        .nav-buttons button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Dark mode nav button hover */
+        body.dark-mode .nav-buttons button:hover {
+            background-color: #6a1b9a;
+        }
+
+        /* Language and dark mode switchers alignment */
+        .language-switcher, .dark-mode-switcher {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Language select dropdown */
+        .language-switcher select {
+            padding: 0.5rem;
+            border-radius: 50px;
+            border: 1px solid #ddd;
+            background-color: var(--text-light);
+            font-family: inherit;
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        /* Dark mode language select */
+        body.dark-mode .language-switcher select {
+            background-color: var(--card-background);
+            border-color: var(--chat-input-border);
+            color: var(--text-color);
+        }
+
+
+        /* Dark mode toggle button */
+        .dark-mode-switcher button {
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        /* Dark mode toggle hover */
+        .dark-mode-switcher button:hover {
+            transform: scale(1.1);
+            color: var(--primary-color);
+        }
+        /* Dark mode icon color in dark mode */
+        body.dark-mode .dark-mode-switcher button {
+            color: #f1c40f;
+        }
+        
+        /* Map container styles */
+        #map {
+            height: 500px;
+            width: 100%;
+            border-radius: 15px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+            margin: 1rem 0;
+            overflow: hidden;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Card general styles */
+        .card {
+            background-color: var(--card-background);
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+            margin: 1.5rem 0;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Card headings */
+        .card h2, .card h3 {
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            font-weight: 600;
+            position: relative;
+            padding-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+        /* Card headings in dark mode */
+        body.dark-mode .card h2, body.dark-mode .card h3 {
+            color: var(--text-color);
+        }
+
+        /* Underline effect for card headings */
+        .card h2::after, .card h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            transition: background 0.3s ease;
+        }
+
+        /* Status indicator badge */
+        .status-indicator {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 500;
+            margin: 0.5rem 0;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Specific status colors */
+        .status-0 { background-color: var(--success-color); color: white; }
+        .status-1 { background-color: var(--primary-color); color: white; }
+        .status-2 { background-color: var(--warning-color); color: white; }
+        .status-4 { background-color: #e67e22; color: white; }
+        .status-6 { background-color: var(--accent-color); color: white; }
+        .status-8 { background-color: #000; color: white; }
+
+        /* Schedule grid layout */
+        .schedule {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        /* Individual day in schedule */
+        .schedule-day {
+            background-color: var(--schedule-day-bg);
+            padding: 1rem;
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Time slots within schedule day */
+        .schedule-time {
+            margin-top: 0.5rem;
+            padding: 0.3rem;
+            background-color: var(--schedule-time-bg);
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Chat box scrollable area */
+        .chat-box {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: var(--chat-box-bg);
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Single chat message styling */
+        .chat-message {
+            margin-bottom: 0.8rem;
+            line-height: 1.4;
+        }
+
+        /* Timestamp in chat */
+        .timestamp {
+            font-size: 0.8rem;
+            color: #666;
+            margin-right: 0.5rem;
+            transition: color 0.3s ease;
+        }
+        /* Timestamp in dark mode */
+        body.dark-mode .timestamp {
+            color: var(--text-color);
+        }
+
+        /* Username in chat */
+        .username {
+            font-weight: 600;
+            color: var(--primary-color);
+            transition: color 0.3s ease;
+        }
+
+        /* Chat input and button group */
+        .chat-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Chat input field */
+        #chat-input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid var(--chat-input-border);
+            border-radius: 50px;
+            font-family: inherit;
+            background-color: var(--card-background);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        /* Chat input placeholder */
+        #chat-input::placeholder {
+            color: var(--text-color);
+            opacity: 0.7;
+        }
+
+
+        /* Chat send button */
+        #chat-button {
+            padding: 0.8rem 1.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        /* Chat send button hover */
+        #chat-button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        /* Chat send button hover in dark mode */
+        body.dark-mode #chat-button:hover {
+            background-color: #6a1b9a;
+        }
+
+        /* Footer styles */
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            background-color: var(--nav-bg);
+            color: var(--text-light);
+            border-radius: 20px 20px 0 0;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .schedule {
+                grid-template-columns: 1fr; /* Stack schedule days */
+            }
+            
+            .nav-container {
+                flex-direction: column; /* Stack nav items */
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-container">
+        <div class="nav-buttons">
+            <button onclick="window.location.href='index.html'">
+                <i class="fas fa-sign-out-alt"></i>
+                <span id="logout-text">Logout</span>
+            </button>
+            <button onclick="window.location.href='maze.html'">
+                <i class="fas fa-gamepad"></i>
+                <span id="game-text">Play Maze Game</span>
+            </button>
+        </div>
+        <div style="display: flex; gap: 1rem; align-items: center;">
+            <div class="dark-mode-switcher">
+                <button id="darkModeToggle" aria-label="Toggle dark mode">
+                    <i class="fas fa-moon" id="darkModeIcon"></i>
+                </button>
+            </div>
+            <div class="language-switcher">
+                <i class="fas fa-globe" style="color: var(--text-light);"></i> 
+                <select id="language-select" onchange="switchLanguage()">
+                    <option value="en">English</option>
+                    <option value="af">Afrikaans</option>
+                    <option value="xh">isiXhosa</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1 id="title">Load Shedding Map</h1>
+            <p id="description">Click on the map to view load shedding schedules for specific areas.</p>
+        </header>
+
+        <div class="card">
+            <div id="map"></div>
+        </div>
+
+        <div class="card">
+            <h3 id="info-title">Load Shedding Status</h3>
+            <p id="info-description">Click on an area on the map to see the load shedding schedule.</p>
+            <div id="load-shedding-info" class="status-indicator status-0">No area selected yet.</div>
+            <div id="schedule-container" class="schedule" style="display: none;"></div>
+        </div>
+
+        <div class="card">
+            <h2 id="chat-title">Community Chat</h2>
+            <div id="chat-box" class="chat-box"></div>
+            <div class="chat-input-group">
+                <input type="text" id="chat-input" placeholder="Type a message..." aria-label="Chat input">
+                <button id="chat-button" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                    <span id="send-text">Send</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p id="footer-text">© 2025 Load Shedding Map - Community Awareness Tool</p>
+    </footer>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Language content for translation
+        const languageContent = {
+            en: {
+                title: "Load Shedding Map",
+                description: "Click on the map to view load shedding schedules for specific areas.",
+                infoTitle: "Load Shedding Status",
+                infoDescription: "Click on an area on the map to see the load shedding schedule.",
+                noSelection: "No area selected yet.",
+                scheduleTitle: "Schedule for",
+                chatTitle: "Community Chat",
+                sendText: "Send",
+                logoutText: "Logout",
+                gameText: "Play Maze Game",
+                stages: {
+                    0: "No load shedding",
+                    1: "Stage 1: Minimal impact",
+                    2: "Stage 2: Moderate impact",
+                    4: "Stage 4: Severe impact",
+                    6: "Stage 6: Critical impact",
+                    8: "Stage 8: Emergency situation"
+                }
+            },
+            af: {
+                title: "Laai Af Skedule Kaart",
+                description: "Klik op die kaart om laai-af skedules vir spesifieke areas te sien.",
+                infoTitle: "Laai Af Status",
+                infoDescription: "Klik op 'n area op die kaart om die laai-af skedule te sien.",
+                noSelection: "Geen area gekies nie.",
+                scheduleTitle: "Skedule vir",
+                chatTitle: "Gemeenskapsgeselskap",
+                sendText: "Stuur",
+                logoutText: "Teken uit",
+                gameText: "Speel Doolhof Speletjie",
+                stages: {
+                    0: "Geen laai-af nie",
+                    1: "Fase 1: Minimale impak",
+                    2: "Fase 2: Matige impak",
+                    4: "Fase 4: Erge impak",
+                    6: "Fase 6: Kritieke impak",
+                    8: "Fase 8: Noodsituasie"
+                }
+            },
+            xh: {
+                title: "Imephu yokucima ugesi",
+                description: "Cofa kwimephu ukubona amaxeshana okucima ugesi kwindawo ezithile.",
+                infoTitle: "Imeko yokucima ugesi",
+                infoDescription: "Cofa kwindawo kwimephu ukubona ixesha lokucima ugesi.",
+                noSelection: "Akukho ndawo ekhethiweyo.",
+                scheduleTitle: "Ixeshana le",
+                chatTitle: "Ingxoxo yoluntu",
+                sendText: "Thumela",
+                logoutText: "Phuma",
+                gameText: "Dlala iMaze yoKukhanya",
+                stages: {
+                    0: "Akukho kucinywa kogesi",
+                    1: "Isigaba 1: Imfutshane",
+                    2: "Isigaba 2: Isiphakathi",
+                    4: "Isigaba 4: Ezinzima",
+                    6: "Isigaba 6: Ebalulekileyo",
+                    8: "Isigaba 8: Isimo esingxamisekileyo"
+                }
+            }
+        };
+
+        // Get current language and dark mode preference from local storage
+        let currentLanguage = localStorage.getItem('currentLanguage') || 'en';
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Check if user is logged in, redirect if not
+        try {
+            if (!localStorage.getItem('currentUser')) {
+                window.location.href = 'index.html';
+            }
+        } catch (e) {
+            // Handle cases where localStorage might be unavailable (e.g., some browsers in private mode)
+            console.log("Running without localStorage:", e);
+            if (typeof localStorage === 'undefined') {
+                window.localStorage = {
+                    getItem: (key) => { if (key === 'darkMode') return 'false'; return null; },
+                    setItem: () => { },
+                    removeItem: () => { }
+                };
+            }
+        }
+
+        // On page load, apply language and dark mode
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('language-select').value = currentLanguage;
+            switchLanguage();
+            applyDarkMode(isDarkMode);
+        });
+
+        // Function to switch display language
+        function switchLanguage() {
+            currentLanguage = document.getElementById('language-select').value;
+            localStorage.setItem('currentLanguage', currentLanguage);
+            
+            const lang = languageContent[currentLanguage];
+            // Update all text elements with new language
+            document.getElementById('title').textContent = lang.title;
+            document.getElementById('description').textContent = lang.description;
+            document.getElementById('info-title').textContent = lang.infoTitle;
+            document.getElementById('info-description').textContent = lang.infoDescription;
+            document.getElementById('chat-title').textContent = lang.chatTitle;
+            document.getElementById('send-text').textContent = lang.sendText;
+            document.getElementById('logout-text').textContent = lang.logoutText;
+            document.getElementById('game-text').textContent = lang.gameText;
+            
+            // Update load shedding info text based on selected area or default
+            const currentInfo = document.getElementById('load-shedding-info').textContent;
+            if (currentInfo === languageContent.en.noSelection || 
+                currentInfo === languageContent.af.noSelection ||
+                currentInfo === languageContent.xh.noSelection) {
+                document.getElementById('load-shedding-info').textContent = lang.noSelection;
+            } else {
+                // Re-render info if an area was already selected
+                const areaName = currentInfo.split(':')[0];
+                updateLoadSheddingInfo(areaName);
+            }
+        }
+
+        // Get dark mode toggle elements
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+
+        // Function to apply/remove dark mode
+        function applyDarkMode(enable) {
+            if (enable) {
+                document.body.classList.add('dark-mode');
+                darkModeIcon.classList.remove('fa-moon');
+                darkModeIcon.classList.add('fa-sun');
+            } else {
+                document.body.classList.remove('dark-mode');
+                darkModeIcon.classList.remove('fa-sun');
+                darkModeIcon.classList.add('fa-moon');
+            }
+            localStorage.setItem('darkMode', enable); // Save preference
+        }
+
+        // Add event listener for dark mode toggle button
+        darkModeToggle.addEventListener('click', () => {
+            isDarkMode = !isDarkMode; // Toggle dark mode state
+            applyDarkMode(isDarkMode); // Apply the new state
+        });
+
+        // Initialize Leaflet map centered at Cape Town
+        var map = L.map('map').setView([-33.9, 18.6], 11);
+
+        // Add OpenStreetMap tiles to the map
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        // Define load shedding areas with their data
+        var areas = [
+            { 
+                name: "Bellville", 
+                lat: -33.9, 
+                lon: 18.6, 
+                status: 4, // Load shedding stage
+                schedule: {
+                    "Monday": ["08:00-10:00", "20:00-22:00"],
+                    "Tuesday": ["10:00-12:00", "22:00-00:00"],
+                    "Wednesday": ["12:00-14:00", "00:00-02:00"],
+                    "Thursday": ["14:00-16:00", "02:00-04:00"],
+                    "Friday": ["16:00-18:00", "04:00-06:00"],
+                    "Saturday": ["18:00-20:00", "06:00-08:00"],
+                    "Sunday": ["No load shedding"]
+                }
+            },
+            { 
+                name: "Parow", 
+                lat: -33.9, 
+                lon: 18.5, 
+                status: 6,
+                schedule: {
+                    "Monday": ["06:00-08:30", "18:00-20:30"],
+                    "Tuesday": ["08:30-11:00", "20:30-23:00"],
+                    "Wednesday": ["11:00-13:30", "23:00-01:30"],
+                    "Thursday": ["13:30-16:00", "01:30-04:00"],
+                    "Friday": ["16:00-18:30", "04:00-06:30"],
+                    "Saturday": ["18:30-21:00", "06:30-09:00"],
+                    "Sunday": ["No load shedding"]
+                }
+            },
+            { 
+                name: "Goodwood", 
+                lat: -33.9, 
+                lon: 18.55, 
+                status: 0,
+                schedule: {
+                    "Monday": ["No load shedding"],
+                    "Tuesday": ["No load shedding"],
+                    "Wednesday": ["No load shedding"],
+                    "Thursday": ["No load shedding"],
+                    "Friday": ["No load shedding"],
+                    "Saturday": ["No load shedding"],
+                    "Sunday": ["No load shedding"]
+                }
+            },
+            { 
+                name: "Plattekloof", 
+                lat: -33.88, 
+                lon: 18.6, 
+                status: 2,
+                schedule: {
+                    "Monday": ["10:00-12:00"],
+                    "Tuesday": ["12:00-14:00"],
+                    "Wednesday": ["14:00-16:00"],
+                    "Thursday": ["16:00-18:00"],
+                    "Friday": ["18:00-20:00"],
+                    "Saturday": ["20:00-22:00"],
+                    "Sunday": ["No load shedding"]
+                }
+            }
+        ];
+
+        // Function to update load shedding info and schedule display
+        function updateLoadSheddingInfo(areaName) {
+            // Find the area object by name
+            const area = areas.find(a => a.name === areaName);
+            if (area) {
+                const lang = languageContent[currentLanguage];
+                // Get status text based on current language and stage
+                const statusText = lang.stages[area.status] || `Stage ${area.status} Load Shedding`;
+                
+                const statusElement = document.getElementById('load-shedding-info');
+                // Show area name and status
+                statusElement.textContent = `${areaName}: ${statusText}`;
+                statusElement.className = `status-indicator status-${area.status}`; // Apply status styling
+                
+                const scheduleContainer = document.getElementById('schedule-container');
+                scheduleContainer.innerHTML = ''; // Clear previous schedule
+                scheduleContainer.style.display = 'grid'; // Show schedule container
+                
+                // Iterate through days and their schedules
+                for (const [day, times] of Object.entries(area.schedule)) {
+                    const dayElement = document.createElement('div');
+                    dayElement.className = 'schedule-day';
+                    dayElement.innerHTML = `<strong>${day}</strong>`; // Day name
+                    
+                    // Add each time slot for the day
+                    times.forEach(time => {
+                        const timeElement = document.createElement('div');
+                        timeElement.className = 'schedule-time';
+                        timeElement.textContent = time; // Load shedding time slot
+                        dayElement.appendChild(timeElement);
+                    });
+                    
+                    scheduleContainer.appendChild(dayElement); // Add day to schedule container
+                }
+            }
+        }
+
+        // Add markers for each area on the map
+        areas.forEach(function(area) {
+            let color;
+            // Determine marker color based on load shedding status
+            switch(area.status) {
+                case 0: color = 'var(--success-color)'; break;
+                case 1: color = 'var(--primary-color)'; break;
+                case 2: color = 'var(--warning-color)'; break;
+                case 4: color = '#e67e22'; break;
+                case 6: color = 'var(--accent-color)'; break;
+                case 8: color = '#000'; break;
+                default: color = 'gray';
+            }
+            
+            // Create custom Leaflet marker icon
+            var marker = L.marker([area.lat, area.lon], {
+                icon: L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="background-color: ${color}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white;"></div>`,
+                    iconSize: [24, 24]
+                })
+            }).addTo(map);
+            
+            marker.bindPopup(area.name); // Bind popup with area name
+            // On marker click, update load shedding info
+            marker.on('click', function() {
+                updateLoadSheddingInfo(area.name);
+            });
+        });
+
+        // Predefined chat users and messages
+        const chatUsers = ['Tony', 'Brady', 'Garreth'];
+        const chatMessages = [
+            "Has anyone heard when Stage 4 will end?",
+            "I heard it might continue through the weekend",
+            "Make sure to charge your power banks during the off periods!"
+        ];
+
+        // Function to add automated chat messages
+        function addAutomatedMessages() {
+            const chatBox = document.getElementById('chat-box');
+            
+            chatUsers.forEach((user, index) => {
+                setTimeout(() => {
+                    const messageElement = document.createElement('div');
+                    messageElement.className = 'chat-message';
+                    // Format timestamp
+                    const timestamp = new Date().toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
+                    messageElement.innerHTML = `
+                        <span class="timestamp">[${timestamp}]</span>
+                        <span class="username">${user}:</span>
+                        ${chatMessages[index]}
+                    `;
+                    chatBox.appendChild(messageElement); // Add message to chat box
+                    chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
+                }, (index + 1) * 1500); // Delay messages
+            });
+        }
+
+        // Function to send a user message
+        function sendMessage() {
+            const message = document.getElementById('chat-input').value.trim();
+            if (message) {
+                const chatBox = document.getElementById('chat-box');
+                const messageElement = document.createElement('div');
+                messageElement.className = 'chat-message';
+                const currentUser = localStorage.getItem('currentUser') || 'Guest'; // Get current user or 'Guest'
+                const timestamp = new Date().toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
+                messageElement.innerHTML = `
+                    <span class="timestamp">[${timestamp}]</span>
+                    <span class="username">${currentUser}:</span>
+                    ${message}
+                `;
+                chatBox.appendChild(messageElement); // Add message
+                document.getElementById('chat-input').value = ''; // Clear input
+                chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
+            }
+        }
+
+        // Event listener for sending message on Enter key press
+        document.getElementById('chat-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Add automated messages when the DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            addAutomatedMessages();
+        });
+    </script>
+</body>
+</html>
